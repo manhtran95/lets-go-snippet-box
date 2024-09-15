@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/julienschmidt/httprouter"
 	"snippetbox.mtran.io/internal/models"
 	"snippetbox.mtran.io/internal/validator"
@@ -16,6 +17,7 @@ type snippetCreateForm struct {
 	Content string
 	Expires int
 	validator.Validator
+	sessionManager *scs.SessionManager
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -102,5 +104,6 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		app.serverError(w, err)
 		return
 	}
+	app.sessionManager.Put(r.Context(), "flash", "Snippet successfully created!")
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 }
