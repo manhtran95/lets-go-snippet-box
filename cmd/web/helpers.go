@@ -13,8 +13,9 @@ import (
 
 func (app *application) newTemplateData(r *http.Request) *templateData {
 	return &templateData{
-		CurrentYear: time.Now().Year(),
-		Flash:       app.sessionManager.PopString(r.Context(), "flash"),
+		CurrentYear:     time.Now().Year(),
+		Flash:           app.sessionManager.PopString(r.Context(), "flash"),
+		IsAuthenticated: app.isAuthenticated(r),
 	}
 }
 
@@ -88,11 +89,17 @@ func (app *application) decodePostForm(r *http.Request, dst any) error {
 		// errors.As() to check for this and raise a panic rather than returning
 		// the error.
 		var invalidDecoderError *form.InvalidDecoderError
+
 		if errors.As(err, &invalidDecoderError) {
 			panic(err)
 		}
 		// For all other errors, we return them as normal.
 		return err
 	}
+
 	return nil
+}
+
+func (app *application) isAuthenticated(r *http.Request) bool {
+	return app.sessionManager.Exists(r.Context(), "authenticatedUserID")
 }

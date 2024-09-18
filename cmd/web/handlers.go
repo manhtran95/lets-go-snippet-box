@@ -64,6 +64,7 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 	var form snippetCreateForm
+
 	err := app.decodePostForm(r, &form)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
@@ -208,7 +209,21 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Logout the user...")
+	// Use the RenewToken() method on the current session to change the session
+	// ID again.
+	err := app.sessionManager.RenewToken(r.Context())
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	// Remove the authenticatedUserID from the session data so that the user is
+	// 'logged out'.
+	app.sessionManager.Remove(r.Context(), "authenticatedUserID")
+	// Add a flash message to the session to confirm to the user that they've been
+	// logged out.
+	app.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
+	// Redirect the user to the application home page.
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 type userLoginForm struct {
